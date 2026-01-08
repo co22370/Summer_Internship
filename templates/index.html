@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Buddy - Your AI Health Companion</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .chat-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 700px;
+            height: 90vh;
+            max-height: 800px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+            border-radius: 20px 20px 0 0;
+            position: relative;
+        }
+
+        .chat-header h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .chat-header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .header-buttons {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .header-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .header-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f8f9fa;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message-content {
+            max-width: 75%;
+            padding: 14px 18px;
+            border-radius: 18px;
+            word-wrap: break-word;
+            line-height: 1.5;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.buddy .message-content {
+            background: white;
+            color: #333;
+            border: 1px solid #e0e0e0;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message.buddy .message-content.recommendation {
+            background: #f0f8ff;
+            border: 2px solid #667eea;
+            white-space: pre-wrap;
+        }
+
+        .chat-input-container {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .button-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .action-button {
+            flex: 1;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .action-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+        }
+
+        .action-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 14px 18px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s;
+            font-family: inherit;
+        }
+
+        .chat-input:focus {
+            border-color: #667eea;
+        }
+
+        .send-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .send-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .send-button:active {
+            transform: translateY(0);
+        }
+
+        .send-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: flex;
+            gap: 5px;
+            padding: 10px;
+        }
+
+        .loading span {
+            width: 8px;
+            height: 8px;
+            background: #667eea;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out;
+        }
+
+        .loading span:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+
+        .loading span:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+
+        @keyframes bounce {
+            0%, 80%, 100% {
+                transform: scale(0);
+            }
+            40% {
+                transform: scale(1);
+            }
+        }
+
+        .emoji {
+            font-size: 20px;
+            margin-right: 8px;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #5568d3;
+        }
+
+        .mood-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .mood-btn {
+            background: #e9ecef;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .mood-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        @media (max-width: 768px) {
+            .chat-container {
+                height: 100vh;
+                max-height: 100vh;
+                border-radius: 0;
+            }
+
+            .chat-header {
+                border-radius: 0;
+            }
+
+            .message-content {
+                max-width: 85%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="header-buttons">
+                <button class="header-btn" onclick="newChat()">🔄 New Chat</button>
+            </div>
+            <h1>
+                <span>🩺</span>
+                Health Buddy
+            </h1>
+            <p>Your Personal AI Health Companion by Tanish Aggarwal</p>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+            <div class="message buddy">
+                <div class="message-content">
+                    <span class="emoji">👋</span>
+                    Hello! I'm Buddy, your health companion. I'm here to support you emotionally and help with wellness advice. How are you feeling today?
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-input-container">
+            <div class="mood-selector" id="moodSelector">
+                <span style="font-size: 12px; color: #666; width: 100%; margin-bottom: 5px;">Quick mood check:</span>
+                <button class="mood-btn" onclick="selectMood('happy')">😊 Happy</button>
+                <button class="mood-btn" onclick="selectMood('calm')">😌 Calm</button>
+                <button class="mood-btn" onclick="selectMood('anxious')">😰 Anxious</button>
+                <button class="mood-btn" onclick="selectMood('sad')">😢 Sad</button>
+                <button class="mood-btn" onclick="selectMood('stressed')">😫 Stressed</button>
+                <button class="mood-btn" onclick="selectMood('overwhelmed')">😵 Overwhelmed</button>
+            </div>
+
+            <div class="button-row">
+                <button class="action-button" id="recommendBtn" onclick="getRecommendations()" disabled>
+                    💡 Get Wellness Recommendations
+                </button>
+            </div>
+
+            <div class="input-row">
+                <input 
+                    type="text" 
+                    class="chat-input" 
+                    id="userInput" 
+                    placeholder="Share what's on your mind..."
+                    onkeypress="handleKeyPress(event)"
+                >
+                <button class="send-button" id="sendButton" onclick="sendMessage()">
+                    Send
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const chatMessages = document.getElementById('chatMessages');
+        const userInput = document.getElementById('userInput');
+        const sendButton = document.getElementById('sendButton');
+        const recommendBtn = document.getElementById('recommendBtn');
+        const moodSelector = document.getElementById('moodSelector');
+        
+        let messageCount = 0;
+        const sessionId = 'session_' + Date.now();
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        function addMessage(content, isUser, isRecommendation = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'buddy'}`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = `message-content ${isRecommendation ? 'recommendation' : ''}`;
+            
+            if (isUser) {
+                contentDiv.textContent = content;
+            } else {
+                contentDiv.innerHTML = content.replace(/\n/g, '<br>');
+            }
+            
+            messageDiv.appendChild(contentDiv);
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            messageCount++;
+            
+            // Enable recommendations button after 3 messages
+            if (messageCount >= 6 && !isUser) {
+                recommendBtn.disabled = false;
+                recommendBtn.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+            }
+
+            // Hide mood selector after first interaction
+            if (messageCount >= 2) {
+                moodSelector.style.display = 'none';
+            }
+        }
+
+        function showLoading() {
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'message buddy';
+            loadingDiv.id = 'loadingMessage';
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content loading';
+            contentDiv.innerHTML = '<span></span><span></span><span></span>';
+            
+            loadingDiv.appendChild(contentDiv);
+            chatMessages.appendChild(loadingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function removeLoading() {
+            const loadingMessage = document.getElementById('loadingMessage');
+            if (loadingMessage) {
+                loadingMessage.remove();
+            }
+        }
+
+        function selectMood(mood) {
+            const message = `I'm feeling ${mood} today.`;
+            userInput.value = message;
+            sendMessage();
+        }
+
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            
+            if (!message) return;
+            
+            addMessage(message, true);
+            userInput.value = '';
+            sendButton.disabled = true;
+            userInput.disabled = true;
+            showLoading();
+
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        message: message,
+                        session_id: sessionId 
+                    })
+                });
+
+                const data = await response.json();
+                removeLoading();
+                addMessage(data.reply, false);
+            } catch (error) {
+                removeLoading();
+                addMessage('Sorry, I encountered an error. Please try again. 💙', false);
+                console.error('Error:', error);
+            } finally {
+                sendButton.disabled = false;
+                userInput.disabled = false;
+                userInput.focus();
+            }
+        }
+
+        async function getRecommendations() {
+            recommendBtn.disabled = true;
+            recommendBtn.textContent = '⏳ Generating recommendations...';
+            showLoading();
+
+            try {
+                const response = await fetch('/recommend', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ session_id: sessionId })
+                });
+
+                const data = await response.json();
+                removeLoading();
+                addMessage(data.recommendations, false, true);
+                
+                recommendBtn.textContent = '✅ Recommendations Provided';
+                setTimeout(() => {
+                    recommendBtn.textContent = '💡 Get Wellness Recommendations';
+                    recommendBtn.disabled = false;
+                }, 3000);
+            } catch (error) {
+                removeLoading();
+                addMessage('Sorry, I had trouble generating recommendations. Please try again! 💙', false);
+                console.error('Error:', error);
+                recommendBtn.disabled = false;
+                recommendBtn.textContent = '💡 Get Wellness Recommendations';
+            }
+        }
+
+        async function newChat() {
+            if (confirm('Start a new conversation? Current chat will be cleared.')) {
+                try {
+                    await fetch('/new_chat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ session_id: sessionId })
+                    });
+                    
+                    chatMessages.innerHTML = `
+                        <div class="message buddy">
+                            <div class="message-content">
+                                <span class="emoji">👋</span>
+                                Hello! I'm Buddy, your health companion. I'm here to support you emotionally and help with wellness advice. How are you feeling today?
+                            </div>
+                        </div>
+                    `;
+                    
+                    messageCount = 0;
+                    recommendBtn.disabled = true;
+                    moodSelector.style.display = 'flex';
+                    userInput.value = '';
+                    userInput.focus();
+                } catch (error) {
+                    console.error('Error:', error);
+                }
+            }
+        }
+
+        // Focus input on load
+        window.onload = () => {
+            userInput.focus();
+        };
+    </script>
+</body>
+</html>
